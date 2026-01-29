@@ -114,6 +114,7 @@ npm run dev
 ### 문서
 
 - WebSocket 통신/저장 베이스: `WEBSOCKET_AND_STORAGE.md`
+- Blockly 협업 기능 명세: `BLOCKLY_COLLAB_SPEC.md`
 
 ### 데이터 흐름
 
