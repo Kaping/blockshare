@@ -33,6 +33,18 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
         redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
         self.redis = aioredis.from_url(redis_url, decode_responses=True)
 
+    def _normalize_block_ids(self, value):
+        """Payload에서 blockId 리스트를 안전하게 정규화"""
+        if not isinstance(value, list):
+            return []
+        normalized = []
+        for item in value:
+            if isinstance(item, (str, int)):
+                item_str = str(item)
+                if item_str:
+                    normalized.append(item_str)
+        return normalized
+
     async def connect(self):
         """
         WebSocket 연결 시 호출
@@ -193,28 +205,39 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
         3. 실패 → LOCK_DENIED 응답
         """
         block_id = payload.get('blockId')
+        block_ids = payload.get('blockIds') or []
         if not block_id:
             return
 
-        success, current_owner = self.lock_manager.acquire_lock(
-            self.room_id,
-            block_id,
-            self.client_id
-        )
-
-        if success:
-            # LOCK_UPDATE broadcast
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'lock_update',
-                    'block_id': block_id,
-                    'owner': self.client_id,
-                }
+        if block_ids:
+            success, current_owner, conflict_block_id = self.lock_manager.acquire_lock_group(
+                self.room_id,
+                block_ids,
+                self.client_id
             )
         else:
+            success, current_owner, conflict_block_id = self.lock_manager.acquire_lock(
+                self.room_id,
+                block_id,
+                self.client_id
+            )
+
+        if success:
+            # LOCK_UPDATE broadcast (그룹이면 전체)
+            target_ids = block_ids if block_ids else [block_id]
+            for target_id in target_ids:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'lock_update',
+                        'block_id': target_id,
+                        'owner': self.client_id,
+                    }
+                )
+        else:
             # LOCK_DENIED 응답 (이 클라이언트에게만)
-            ttl = self.lock_manager.redis.pttl(f"locks:{self.room_id}:{block_id}")
+            ttl_block_id = conflict_block_id or block_id
+            ttl = self.lock_manager.redis.pttl(f"locks:{self.room_id}:{ttl_block_id}")
             await self.send(text_data=serialize_message(MessageType.LOCK_DENIED, {
                 'blockId': block_id,
                 'owner': current_owner,
@@ -234,18 +257,44 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
         events = payload.get('events', [])
         workspace_xml = payload.get('workspaceXml')
         release_lock = payload.get('releaseLock', True)
+        release_block_ids = self._normalize_block_ids(payload.get('releaseBlockIds') or [])
 
-        if not block_id:
+        if isinstance(block_id, (str, int)):
+            block_id = str(block_id)
+        else:
+            logger.error("[WS] Invalid blockId in COMMIT: %s (type=%s)", block_id, type(block_id))
             return
+
+        if release_block_ids and not all(isinstance(b, str) for b in release_block_ids):
+            logger.error(
+                "[WS] Invalid releaseBlockIds in COMMIT: %s (types=%s)",
+                release_block_ids,
+                [type(b) for b in release_block_ids],
+            )
 
         # 락 소유권 검증 (락이 있으면 소유자만 허용)
         owner = self.lock_manager.get_lock_owner(self.room_id, block_id)
         if owner and owner != self.client_id:
-            return  # 소유자가 아니면 무시
+            if release_block_ids:
+                has_any_lock = any(
+                    self.lock_manager.get_lock_owner(self.room_id, bid) == self.client_id
+                    for bid in release_block_ids
+                )
+                if not has_any_lock:
+                    return
+            else:
+                return  # 소유자가 아니면 무시
 
         # 락 해제 (요청된 경우만)
         if release_lock:
-            self.lock_manager.release_lock(self.room_id, block_id, self.client_id)
+            if release_block_ids:
+                released_blocks = self.lock_manager.release_lock_group(
+                    self.room_id,
+                    release_block_ids,
+                    self.client_id
+                )
+            else:
+                released_blocks = [block_id] if self.lock_manager.release_lock(self.room_id, block_id, self.client_id) else []
 
         # 워크스페이스 스냅샷 저장 (옵션)
         if workspace_xml:
@@ -264,15 +313,16 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
         )
 
         # LOCK_UPDATE (owner=null) broadcast
-        if release_lock:
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'lock_update',
-                    'block_id': block_id,
-                    'owner': None,
-                }
-            )
+        if release_lock and released_blocks:
+            for released_id in released_blocks:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'lock_update',
+                        'block_id': released_id,
+                        'owner': None,
+                    }
+                )
 
     # === Group message handlers ===
 
@@ -351,6 +401,11 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
             'lastSeen': time.time(),
         })
         await self.redis.hset(online_key, self.client_id, user_data)
+        # 보유 락 TTL 갱신 (HEARTBEAT)
+        try:
+            self.lock_manager.refresh_all_locks(self.room_id, self.client_id, ttl_ms=20000)
+        except Exception as e:
+            logger.exception("[WS ERROR] Failed to refresh locks: %s", e)
 
     async def _prune_stale_users(self):
         """오래된 사용자 정리"""

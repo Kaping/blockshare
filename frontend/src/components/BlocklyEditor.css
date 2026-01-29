@@ -10,14 +10,58 @@
 }
 
 /* 내가 락을 소유한 블록 강조 */
-:global(.my-lock) {
-  filter: drop-shadow(0 0 8px #4CAF50);
+.my-lock {
+  filter: none;
   opacity: 1 !important;
 }
 
+/* 그룹 테두리 하이라이트 (실제 path에만 적용) */
+.blocklyDraggable.my-lock > .blocklyPath,
+.blocklyDraggable.my-lock > .blocklyPathDark,
+.blocklyDraggable.my-lock > .blocklyPathLight {
+  stroke: var(--lock-color, #4CAF50) !important;
+  stroke-width: 4px !important;
+  stroke-opacity: 1 !important;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  vector-effect: non-scaling-stroke;
+}
+
+/* 일부 블록은 path가 자식이 아닐 수 있어 보강 */
+.my-lock .blocklyPath,
+.my-lock .blocklyPathDark,
+.my-lock .blocklyPathLight {
+  stroke: var(--lock-color, #4CAF50) !important;
+  stroke-width: 4px !important;
+}
+
 /* 다른 사용자가 락을 소유한 블록 강조 */
-:global(.other-lock) {
-  filter: drop-shadow(0 0 8px #F44336);
-  opacity: 0.7 !important;
+.other-lock {
+  filter: none;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+/* 다른 사용자 락은 굵은 테두리로 표시 */
+.blocklyDraggable.other-lock > .blocklyPath,
+.blocklyDraggable.other-lock > .blocklyPathDark,
+.blocklyDraggable.other-lock > .blocklyPathLight {
+  stroke: var(--lock-color, #F44336) !important;
+  stroke-width: 4px !important;
+  stroke-opacity: 1 !important;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  vector-effect: non-scaling-stroke;
+}
+
+/* 일부 블록은 path가 자식이 아닐 수 있어 보강 */
+.other-lock .blocklyPath,
+.other-lock .blocklyPathDark,
+.other-lock .blocklyPathLight {
+  stroke: var(--lock-color, #F44336) !important;
+  stroke-width: 4px !important;
+}
+
+.lock-badge {
   pointer-events: none;
 }

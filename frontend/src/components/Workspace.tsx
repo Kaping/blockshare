@@ -145,14 +145,7 @@ function Workspace() {
         console.warn('[Workspace] applyRemoteChange not available')
       }
 
-      // 이벤트 적용 실패 대비 스냅샷 적용
-      if (workspaceXml) {
-        if ((window as any).__loadWorkspaceSnapshot) {
-          (window as any).__loadWorkspaceSnapshot(workspaceXml)
-        } else {
-          (window as any).__pendingWorkspaceSnapshot = workspaceXml
-        }
-      }
+      // 원격 커밋 시 스냅샷은 적용하지 않음 (시점 고정)
     })
 
     // WebSocket 연결

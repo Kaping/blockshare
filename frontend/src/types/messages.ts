@@ -15,6 +15,7 @@ export interface LockAcquireMessage {
   t: 'LOCK_ACQUIRE';
   payload: {
     blockId: string;
+    blockIds?: string[];
   };
 }
 
@@ -25,6 +26,7 @@ export interface CommitMessage {
     events: any[];  // Blockly event JSON
     workspaceXml?: string;
     releaseLock?: boolean;
+    releaseBlockIds?: string[];
   };
 }
 

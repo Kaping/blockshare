@@ -35,7 +35,7 @@ export class LockManager {
   /**
    * 락 획득 요청
    */
-  async requestLock(blockId: string): Promise<boolean> {
+  async requestLock(blockId: string, blockIds?: string[]): Promise<boolean> {
     // 이미 소유 중인 락이면 즉시 성공
     if (this.myLocks.has(blockId)) {
       return true
@@ -54,7 +54,10 @@ export class LockManager {
       // LOCK_ACQUIRE 메시지 전송
       this.wsClient.send({
         t: MessageType.LOCK_ACQUIRE,
-        payload: { blockId }
+        payload: {
+          blockId,
+          ...(blockIds && blockIds.length ? { blockIds } : {}),
+        }
       })
 
       // 타임아웃 설정 (5초)
@@ -70,11 +73,24 @@ export class LockManager {
   /**
    * 락 해제 (커밋)
    */
-  releaseLock(blockId: string, events: any[], workspaceXml?: string, force: boolean = false) {
+  releaseLock(
+    blockId: string,
+    events: any[],
+    workspaceXml?: string,
+    force: boolean = false,
+    releaseBlockIds?: string[]
+  ) {
     if (!this.myLocks.has(blockId) && !force) {
       console.warn(`Cannot release lock for ${blockId}: not owned`)
       return
     }
+
+    // 로컬 락 상태 선반영 (서버 락 해제 누락 대비)
+    const idsToRelease = releaseBlockIds && releaseBlockIds.length ? releaseBlockIds : [blockId]
+    idsToRelease.forEach(id => {
+      this.lockedBlocks.delete(id)
+      this.myLocks.delete(id)
+    })
 
     // COMMIT 메시지 전송
     this.wsClient.send({
@@ -84,6 +100,7 @@ export class LockManager {
         events,
         ...(workspaceXml ? { workspaceXml } : {}),
         releaseLock: true,
+        ...(releaseBlockIds && releaseBlockIds.length ? { releaseBlockIds } : {}),
       }
     })
 
@@ -138,6 +155,20 @@ export class LockManager {
    */
   getAllLocks(): Map<string, string> {
     return new Map(this.lockedBlocks)
+  }
+
+  /**
+   * 그룹 락 상태 강제 동기화 (연결 이벤트 후 보정용)
+   */
+  syncGroupLocks(owner: string, blockIds: string[]) {
+    blockIds.forEach(blockId => {
+      this.lockedBlocks.set(blockId, owner)
+      if (owner === this.myClientId) {
+        this.myLocks.add(blockId)
+      } else {
+        this.myLocks.delete(blockId)
+      }
+    })
   }
 
   /**

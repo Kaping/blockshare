@@ -30,7 +30,7 @@ function JoinRoom() {
 
     try {
       // Room 정보 조회
-      const response = await fetch(`http://localhost:8000/api/room/${roomId}/`)
+      const response = await fetch(`/api/room/${roomId}/`)
       if (!response.ok) {
         throw new Error(t('error.roomFetchFailed'))
       }
