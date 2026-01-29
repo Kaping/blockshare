@@ -40,7 +40,7 @@ export class WebSocketClient {
     return new Promise((resolve, reject) => {
       try {
         // WebSocket URL 구성
-        const wsUrl = `ws://localhost:8000/ws/workspace/${roomId}/?nickname=${encodeURIComponent(nickname)}`
+        const wsUrl = this.buildWebSocketUrl(roomId, nickname)
         console.log('[WS Client] Connecting to:', wsUrl)
 
         this.ws = new WebSocket(wsUrl)
@@ -91,6 +91,25 @@ export class WebSocketClient {
         reject(error)
       }
     })
+  }
+
+  /**
+   * WebSocket URL 구성
+   * - 운영: 동일 오리진(리버스 프록시) 기준
+   * - 개발: 기본값 localhost:8000
+   */
+  private buildWebSocketUrl(roomId: string, nickname: string): string {
+    const envUrl = (import.meta as any).env?.VITE_WS_URL as string | undefined
+    const isDev = (import.meta as any).env?.DEV === true
+    const isLocalDev = isDev && window.location.hostname === 'localhost'
+
+    const base =
+      envUrl ||
+      (isLocalDev
+        ? 'ws://localhost:8000'
+        : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`)
+
+    return `${base}/ws/workspace/${roomId}/?nickname=${encodeURIComponent(nickname)}`
   }
 
   /**

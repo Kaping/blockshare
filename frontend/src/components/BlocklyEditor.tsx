@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react'
 import * as Blockly from 'blockly'
 import './BlocklyEditor.css'
 import { LockManager } from '../services/lockManager'
+import { useI18n } from '../i18n/useI18n'
 
 interface BlocklyEditorProps {
   lockManager: LockManager
@@ -25,13 +26,14 @@ function BlocklyEditor({ lockManager, userMap, myClientId, onCommitApply }: Bloc
   const selectedBlockIdRef = useRef<string | null>(null)
   const dragEndTimerRef = useRef<number | null>(null)
   const ownerNameCacheRef = useRef<Record<string, string>>({})
+  const { t, locale } = useI18n()
 
   useEffect(() => {
     if (!blocklyDivRef.current) return
 
     // Blockly 워크스페이스 초기화
     const workspace = Blockly.inject(blocklyDivRef.current, {
-      toolbox: getToolbox(),
+      toolbox: getToolbox(t),
       grid: {
         spacing: 20,
         length: 3,
@@ -71,6 +73,12 @@ function BlocklyEditor({ lockManager, userMap, myClientId, onCommitApply }: Bloc
       workspaceRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const workspace = workspaceRef.current
+    if (!workspace) return
+    workspace.updateToolbox(getToolbox(t))
+  }, [locale, t])
 
   useEffect(() => {
     const workspace = workspaceRef.current
@@ -325,7 +333,7 @@ function BlocklyEditor({ lockManager, userMap, myClientId, onCommitApply }: Bloc
     console.log(`Lock denied for ${blockId} (owner: ${owner}, ttl: ${ttlMs}ms)`)
 
     // 사용자에게 알림
-    alert(`다른 사용자가 이 블록을 편집 중입니다 (${Math.ceil(ttlMs / 1000)}초 후 만료)`)
+    alert(t('error.lockDenied', { seconds: Math.ceil(ttlMs / 1000) }))
   }
 
   /**
@@ -562,13 +570,13 @@ function BlocklyEditor({ lockManager, userMap, myClientId, onCommitApply }: Bloc
 /**
  * Blockly 툴박스 정의
  */
-function getToolbox(): Blockly.utils.toolbox.ToolboxDefinition {
+function getToolbox(t: (key: string, params?: Record<string, string | number>) => string): Blockly.utils.toolbox.ToolboxDefinition {
   return {
     kind: 'categoryToolbox',
     contents: [
       {
         kind: 'category',
-        name: '논리',
+        name: t('block.category.logic'),
         colour: '#5C81A6',
         contents: [
           { kind: 'block', type: 'controls_if' },
@@ -579,7 +587,7 @@ function getToolbox(): Blockly.utils.toolbox.ToolboxDefinition {
       },
       {
         kind: 'category',
-        name: '반복',
+        name: t('block.category.loop'),
         colour: '#5CA65C',
         contents: [
           { kind: 'block', type: 'controls_repeat_ext' },
@@ -588,7 +596,7 @@ function getToolbox(): Blockly.utils.toolbox.ToolboxDefinition {
       },
       {
         kind: 'category',
-        name: '수학',
+        name: t('block.category.math'),
         colour: '#5C68A6',
         contents: [
           { kind: 'block', type: 'math_number' },
@@ -597,7 +605,7 @@ function getToolbox(): Blockly.utils.toolbox.ToolboxDefinition {
       },
       {
         kind: 'category',
-        name: '텍스트',
+        name: t('block.category.text'),
         colour: '#5CA68D',
         contents: [
           { kind: 'block', type: 'text' },

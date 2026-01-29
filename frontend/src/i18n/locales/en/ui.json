@@ -1,0 +1,16 @@
+{
+  "appTitle": "BlockShare",
+  "roomLabel": "Room: {roomId}",
+  "nicknameLabel": "Nickname",
+  "nicknamePlaceholder": "Enter your nickname",
+  "joinButton": "Join",
+  "joining": "Joining...",
+  "onlineUsersTitle": "Online users ({count})",
+  "meSuffix": "(me)",
+  "languageLabel": "Language",
+  "languageOptions": {
+    "ko": "한국어",
+    "en": "English"
+  }
+}
+

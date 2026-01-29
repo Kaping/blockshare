@@ -1,0 +1,8 @@
+{
+  "welcome": "Welcome, {nickname}!",
+  "connecting": "Connecting to server...",
+  "reconnecting": "Reconnecting...",
+  "disconnected": "Disconnected",
+  "connected": "Connected"
+}
+

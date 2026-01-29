@@ -6,12 +6,15 @@ import BlocklyEditor from './BlocklyEditor'
 import OnlineUsers from './OnlineUsers'
 import './Workspace.css'
 import { MessageType, User } from '../types/messages'
+import { useI18n } from '../i18n/useI18n'
+import LanguageSelector from './LanguageSelector'
 
 function Workspace() {
   const { roomId } = useParams<{ roomId: string }>()
   const location = useLocation()
   const navigate = useNavigate()
   const nickname = location.state?.nickname
+  const { t } = useI18n()
 
   const [connected, setConnected] = useState(false)
   const [reconnecting, setReconnecting] = useState(false)
@@ -155,7 +158,7 @@ function Workspace() {
     // WebSocket 연결
     wsClient.connect(roomId!, nickname).catch((error) => {
       console.error('Failed to connect:', error)
-      alert('서버 연결에 실패했습니다')
+      alert(t('error.serverConnectFailed'))
       navigate(`/room/${roomId}`)
     })
 
@@ -186,19 +189,20 @@ function Workspace() {
     <div className="workspace">
       <div className="workspace-header">
         <div className="header-left">
-          <h2>Room: {roomId}</h2>
-          <span className="nickname">Welcome, {nickname}!</span>
+          <h2>{t('ui.roomLabel', { roomId: roomId || '' })}</h2>
+          <span className="nickname">{t('session.welcome', { nickname })}</span>
         </div>
 
         <div className="header-right">
+          <LanguageSelector />
           {reconnecting && (
-            <span className="status reconnecting">재연결 중...</span>
+            <span className="status reconnecting">{t('session.reconnecting')}</span>
           )}
           {!connected && !reconnecting && (
-            <span className="status disconnected">연결 끊김</span>
+            <span className="status disconnected">{t('session.disconnected')}</span>
           )}
           {connected && (
-            <span className="status connected">연결됨</span>
+            <span className="status connected">{t('session.connected')}</span>
           )}
         </div>
       </div>
@@ -213,7 +217,7 @@ function Workspace() {
             />
           )}
           {!connected && (
-            <div className="loading">서버에 연결 중...</div>
+            <div className="loading">{t('session.connecting')}</div>
           )}
         </div>
 

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import './JoinRoom.css'
+import { useI18n } from '../i18n/useI18n'
+import LanguageSelector from './LanguageSelector'
 
 interface RoomInfo {
   room_id: string;
@@ -15,10 +17,11 @@ function JoinRoom() {
   const [error, setError] = useState('')
   const { roomId } = useParams<{ roomId: string }>()
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   async function handleJoin() {
     if (!nickname.trim()) {
-      setError('닉네임을 입력해주세요')
+      setError(t('error.nicknameRequired'))
       return
     }
 
@@ -29,21 +32,21 @@ function JoinRoom() {
       // Room 정보 조회
       const response = await fetch(`http://localhost:8000/api/room/${roomId}/`)
       if (!response.ok) {
-        throw new Error('방 정보를 가져올 수 없습니다')
+        throw new Error(t('error.roomFetchFailed'))
       }
 
       const room: RoomInfo = await response.json()
 
       // 인원 체크
       if (room.current_users >= room.max_users) {
-        setError('방이 꽉 찼습니다')
+        setError(t('error.roomFull'))
         return
       }
 
       // 워크스페이스로 이동
       navigate(`/workspace/${roomId}`, { state: { nickname: nickname.trim() } })
     } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
+      setError(err instanceof Error ? err.message : t('error.unknownError'))
     } finally {
       setLoading(false)
     }
@@ -58,18 +61,21 @@ function JoinRoom() {
   return (
     <div className="join-room">
       <div className="join-room-card">
-        <h1>BlockShare</h1>
-        <p className="room-id">Room: {roomId}</p>
+        <div className="join-room-header">
+          <h1>{t('ui.appTitle')}</h1>
+          <LanguageSelector />
+        </div>
+        <p className="room-id">{t('ui.roomLabel', { roomId: roomId || '' })}</p>
 
         <div className="form-group">
-          <label htmlFor="nickname">닉네임</label>
+          <label htmlFor="nickname">{t('ui.nicknameLabel')}</label>
           <input
             id="nickname"
             type="text"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="닉네임을 입력하세요"
+            placeholder={t('ui.nicknamePlaceholder')}
             maxLength={20}
             disabled={loading}
             autoFocus
@@ -83,7 +89,7 @@ function JoinRoom() {
           onClick={handleJoin}
           disabled={loading || !nickname.trim()}
         >
-          {loading ? '입장 중...' : '입장하기'}
+          {loading ? t('ui.joining') : t('ui.joinButton')}
         </button>
       </div>
     </div>

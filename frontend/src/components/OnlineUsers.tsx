@@ -4,6 +4,7 @@
 
 import { User } from '../types/messages'
 import './OnlineUsers.css'
+import { useI18n } from '../i18n/useI18n'
 
 interface OnlineUsersProps {
   users: User[]
@@ -11,15 +12,19 @@ interface OnlineUsersProps {
 }
 
 function OnlineUsers({ users, currentNickname }: OnlineUsersProps) {
+  const { t } = useI18n()
+
   return (
     <div className="online-users">
-      <h3>온라인 사용자 ({users.length + 1}명)</h3>
+      <h3>{t('ui.onlineUsersTitle', { count: users.length + 1 })}</h3>
 
       <div className="users-list">
         {/* 자신 */}
         <div className="user-item me">
           <div className="user-color" style={{ backgroundColor: '#667eea' }}></div>
-          <span className="user-nickname">{currentNickname} (나)</span>
+          <span className="user-nickname">
+            {currentNickname} {t('ui.meSuffix')}
+          </span>
         </div>
 
         {/* 다른 사용자들 */}

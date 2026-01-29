@@ -1,0 +1,9 @@
+{
+  "nicknameRequired": "Please enter a nickname",
+  "roomFetchFailed": "Unable to fetch room information",
+  "roomFull": "The room is full",
+  "unknownError": "An unknown error occurred",
+  "serverConnectFailed": "Failed to connect to the server",
+  "lockDenied": "Another user is editing this block (expires in {seconds}s)"
+}
+
