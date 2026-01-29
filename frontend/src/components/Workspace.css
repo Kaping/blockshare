@@ -1,0 +1,96 @@
+.workspace {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+}
+
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  border-bottom: 2px solid #e0e0e0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.workspace-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.workspace-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.workspace-header .nickname {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.workspace-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.workspace-header .status {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.workspace-header .status.connected {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.workspace-header .status.disconnected {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.workspace-header .status.reconnecting {
+  background: #fff3e0;
+  color: #ff9800;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.workspace-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.editor-container {
+  flex: 1;
+  position: relative;
+  background: #f5f5f5;
+}
+
+.editor-container .loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 1.5rem;
+}

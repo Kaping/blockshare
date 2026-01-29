@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: blockshare
+      POSTGRES_USER: blockshare
+      POSTGRES_PASSWORD: blockshare
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: ./backend
+    command: daphne -b 0.0.0.0 -p 8000 blockshare.asgi:application
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://blockshare:blockshare@postgres:5432/blockshare
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: blockshare.settings
+      DB_HOST: postgres
+      DB_NAME: blockshare
+      DB_USER: blockshare
+      DB_PASSWORD: blockshare
+
+  frontend:
+    build: ./frontend
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:

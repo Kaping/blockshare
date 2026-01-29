@@ -1,0 +1,23 @@
+.blockly-editor {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.blockly-workspace {
+  width: 100%;
+  height: 100%;
+}
+
+/* 내가 락을 소유한 블록 강조 */
+:global(.my-lock) {
+  filter: drop-shadow(0 0 8px #4CAF50);
+  opacity: 1 !important;
+}
+
+/* 다른 사용자가 락을 소유한 블록 강조 */
+:global(.other-lock) {
+  filter: drop-shadow(0 0 8px #F44336);
+  opacity: 0.7 !important;
+  pointer-events: none;
+}

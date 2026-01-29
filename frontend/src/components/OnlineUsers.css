@@ -1,0 +1,59 @@
+.online-users {
+  width: 250px;
+  background: white;
+  border-left: 2px solid #e0e0e0;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.online-users h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #f5f5f5;
+  transition: background 0.2s;
+}
+
+.user-item:hover {
+  background: #eee;
+}
+
+.user-item.me {
+  background: #e8ecf4;
+  border: 2px solid #667eea;
+}
+
+.user-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.user-nickname {
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-item.me .user-nickname {
+  color: #667eea;
+  font-weight: 600;
+}
